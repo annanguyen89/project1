@@ -1,0 +1,69 @@
+.auth-form-card {
+    background-color: var(--white);
+    padding: var(--spacing-large) 40px; /* Adjust padding as per Figma */
+    border-radius: 10px; /* Match Figma card corners */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 450px; /* Max width for the form card */
+    text-align: center;
+}
+
+.auth-form-card h2 {
+    font-size: 28px;
+    margin-bottom: 30px;
+    color: var(--primary-black);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-medium); /* Space between form groups */
+}
+
+.form-group {
+    text-align: left;
+    position: relative; /* For label animation */
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    color: var(--medium-gray);
+    margin-bottom: 5px; /* Space between label and input */
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--light-gray);
+    border-radius: 5px;
+    font-size: 16px;
+    color: var(--primary-black);
+    background-color: var(--light-gray); /* Input background color */
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent-blue); /* Highlight on focus */
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+.forgot-password-link {
+    font-size: 14px;
+    color: var(--medium-gray);
+    text-decoration: none;
+    text-align: right;
+    display: block; /* Ensures it takes full width for alignment */
+    margin-bottom: var(--spacing-medium);
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+}
+
+.form-submit-button {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    margin-top: var(--spacing-medium); /* Space above button */
+}

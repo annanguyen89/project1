@@ -1,0 +1,10 @@
+:root {
+    --black: #000000; 
+    --white: #FFFFFF;
+    --gray: #D9D9D9; 
+    --font-family-saira-condensed: 'Saira Condensed', sans-serif; /* logo font */
+    --font-family-saira: 'Saira', sans-serif; /* headings,text */
+    --spacing-small: 8px;
+    --spacing-medium: 16px;
+    --spacing-large: 24px;
+}
