@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Header from '../../components/common/header/header';
 import Footer from '../../components/common/footer/footer';
 import Button from '../../components/common/button/button';
@@ -18,12 +18,9 @@ function HomePage() {
           <p>
             Our solution offers a personalized mock interview experience for any positions from different areas. By uploading your resume and job description, we generate tailored questions, and provide detailed feedback and actions based on your performance.
           </p>
-          <Button 
-            className="start-interview-button" 
-            onClick={() => navigate('/interviewer')}
-          >
+          <Link to="/interviewer/upload" className="start-interview-button">
             Start Your Interview
-          </Button>
+          </Link>
           <div className="ai-interviewer-image-container">
             <img src={aiInterviewerCristine} alt="AI Interviewer Cristine" />
           </div>
