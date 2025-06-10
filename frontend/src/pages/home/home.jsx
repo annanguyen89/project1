@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../../components/common/header/header';
 import Footer from '../../components/common/footer/footer';
 import Button from '../../components/common/button/button';
@@ -6,6 +7,8 @@ import aiInterviewerCristine from '../../assets/images/ai_interviewer_cristine.j
 import './home.css';
 
 function HomePage() {
+  const navigate = useNavigate();
+
   return (
     <div className="home-page-container">
       <Header />
@@ -15,7 +18,10 @@ function HomePage() {
           <p>
             Our solution offers a personalized mock interview experience for any positions from different areas. By uploading your resume and job description, we generate tailored questions, and provide detailed feedback and actions based on your performance.
           </p>
-          <Button className="start-interview-button" onClick={() => console.log('Start Interview clicked!')}>
+          <Button 
+            className="start-interview-button" 
+            onClick={() => navigate('/interviewer')}
+          >
             Start Your Interview
           </Button>
           <div className="ai-interviewer-image-container">
@@ -42,7 +48,7 @@ function HomePage() {
                 </div>
                 <div className="feature-content">
                   <h3>Technical Interview</h3>
-                  <p>Practice AI-generated technical questions tailored to your job description and the company’s interview pattern.</p>
+                  <p>Practice AI-generated technical questions tailored to your job description and the company's interview pattern.</p>
                 </div>
               </div>
 

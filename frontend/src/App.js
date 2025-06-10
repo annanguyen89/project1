@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/home/home';
 import LoginPage from './pages/login/login';
 import SignUpPage from './pages/sign-up/sign-up';
+import InterviewerPage from './pages/interviewer/interviewer';
 
 function App() {
   return (
@@ -12,10 +13,10 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/sign-up" element={<SignUpPage />} />
-          {/* Add routes for About, FAQs, etc., as you create those pages */}
+          <Route path="/interviewer" element={<InterviewerPage />} />
           <Route path="/about" element={<div>About Page Placeholder</div>} />
           <Route path="/faqs" element={<div>FAQs Page Placeholder</div>} />
-          <Route path="*" element={<div>404 Not Found</div>} /> {/* Catch-all for unknown routes */}
+          <Route path="*" element={<div>404 Not Found</div>} /> 
         </Routes>
       </div>
     </Router>
