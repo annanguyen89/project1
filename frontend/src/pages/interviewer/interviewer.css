@@ -112,6 +112,47 @@
     background-color: #333333;
 }
 
+.conversation-section {
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    min-height: 100px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.message {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    max-width: 80%;
+    font-family: 'Saira', sans-serif;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.ai-message {
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+    margin-right: auto;
+    color: #333;
+    align-self: flex-start;
+}
+
+.user-message {
+    background-color: #000000;
+    color: #ffffff;
+    margin-left: auto;
+    align-self: flex-end;
+}
+
+.message:last-child {
+    margin-bottom: 0;
+}
+
 @media (max-width: 768px) {
     .interviewer-main-content {
         padding: 15px;
