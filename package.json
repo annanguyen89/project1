@@ -1,5 +1,8 @@
 {
   "dependencies": {
-    "react-router-dom": "^7.6.2"
+    "@aws-sdk/client-bedrock-runtime": "^3.828.0",
+    "@aws-sdk/client-transcribe-streaming": "^3.830.0",
+    "react-router-dom": "^7.6.2",
+    "uuid": "^11.1.0"
   }
 }
