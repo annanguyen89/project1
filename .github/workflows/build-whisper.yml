@@ -31,7 +31,21 @@ jobs:
     - name: Prepare binary
       run: |
         mkdir -p artifacts
-        cp whisper.cpp/main artifacts/whisper
+        # Check what files were built
+        find whisper.cpp -name "*main*" -type f || true
+        find whisper.cpp -name "whisper*" -type f || true
+        find whisper.cpp/build -name "*" -type f || true
+        # Copy the correct binary (newer whisper.cpp builds put it in build/bin/)
+        if [ -f "whisper.cpp/build/bin/main" ]; then
+          cp whisper.cpp/build/bin/main artifacts/whisper
+        elif [ -f "whisper.cpp/main" ]; then
+          cp whisper.cpp/main artifacts/whisper
+        elif [ -f "whisper.cpp/build/bin/whisper-cli" ]; then
+          cp whisper.cpp/build/bin/whisper-cli artifacts/whisper
+        else
+          echo "Could not find whisper binary!"
+          exit 1
+        fi
         chmod +x artifacts/whisper
         
     - name: Check binary info
