@@ -26,9 +26,8 @@ jobs:
     - name: Build whisper.cpp
       run: |
         cd whisper.cpp
-        # Build static binary to avoid shared library dependencies in Firebase Functions
-        cmake -B build -DGGML_STATIC=ON -DWHISPER_BUILD_EXAMPLES=ON
-        cmake --build build --config Release
+        # Use make instead of cmake for simpler static build
+        make -j$(nproc)
         
     - name: Prepare binary
       run: |
@@ -46,8 +45,8 @@ jobs:
         WHISPER_BINARY=""
         
         # Check for the actual transcription binary (should be large, >1MB)
-        # According to whisper.cpp docs, the main binary is whisper-cli in build/bin/
-        for candidate in "whisper.cpp/build/bin/whisper-cli" "whisper.cpp/build/bin/main" "whisper.cpp/main" "whisper.cpp/build/examples/main"; do
+        # With make, the binary is usually called 'main' in the root directory
+        for candidate in "whisper.cpp/main" "whisper.cpp/build/bin/whisper-cli" "whisper.cpp/build/bin/main" "whisper.cpp/build/examples/main"; do
           if [ -f "$candidate" ]; then
             size=$(stat -c%s "$candidate" 2>/dev/null || stat -f%z "$candidate" 2>/dev/null || echo "0")
             echo "Found $candidate with size $size bytes"
