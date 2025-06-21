@@ -26,8 +26,15 @@ jobs:
     - name: Build whisper.cpp
       run: |
         cd whisper.cpp
-        # Use make instead of cmake for simpler static build
-        make -j$(nproc)
+        # Build static binary with aggressive static linking
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DWHISPER_BUILD_EXAMPLES=ON \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DGGML_STATIC=ON \
+          -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++" \
+          -DCMAKE_FIND_LIBRARY_SUFFIXES=".a"
+        cmake --build build --config Release -j$(nproc)
         
     - name: Prepare binary
       run: |
@@ -45,8 +52,8 @@ jobs:
         WHISPER_BINARY=""
         
         # Check for the actual transcription binary (should be large, >1MB)
-        # With make, the binary is usually called 'main' in the root directory
-        for candidate in "whisper.cpp/main" "whisper.cpp/build/bin/whisper-cli" "whisper.cpp/build/bin/main" "whisper.cpp/build/examples/main"; do
+        # With cmake build, the binary is in build/bin/ directory
+        for candidate in "whisper.cpp/build/bin/whisper-cli" "whisper.cpp/build/bin/main" "whisper.cpp/main" "whisper.cpp/build/examples/main"; do
           if [ -f "$candidate" ]; then
             size=$(stat -c%s "$candidate" 2>/dev/null || stat -f%z "$candidate" 2>/dev/null || echo "0")
             echo "Found $candidate with size $size bytes"
@@ -61,6 +68,11 @@ jobs:
           echo "Using whisper binary: $WHISPER_BINARY"
           cp "$WHISPER_BINARY" artifacts/whisper
           chmod +x artifacts/whisper
+          
+          # Check if binary is truly static
+          echo "Checking binary dependencies:"
+          ldd "$WHISPER_BINARY" || echo "Static binary (no dependencies)"
+          
         else
           echo "ERROR: Could not find a suitable whisper binary!"
           echo "Available files:"
