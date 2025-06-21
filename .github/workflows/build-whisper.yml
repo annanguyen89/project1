@@ -26,8 +26,8 @@ jobs:
     - name: Build whisper.cpp
       run: |
         cd whisper.cpp
-        # Follow the official build instructions
-        cmake -B build
+        # Build static binary to avoid shared library dependencies in Firebase Functions
+        cmake -B build -DGGML_STATIC=ON -DWHISPER_BUILD_EXAMPLES=ON
         cmake --build build --config Release
         
     - name: Prepare binary
