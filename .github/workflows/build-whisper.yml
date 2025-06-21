@@ -36,14 +36,15 @@ jobs:
         find whisper.cpp -name "whisper*" -type f || true
         find whisper.cpp/build -name "*" -type f || true
         # Copy the correct binary (newer whisper.cpp builds put it in build/bin/)
+        # We want the 'main' binary (which is the actual transcriber), not 'whisper-cli' (deprecated)
         if [ -f "whisper.cpp/build/bin/main" ]; then
           cp whisper.cpp/build/bin/main artifacts/whisper
         elif [ -f "whisper.cpp/main" ]; then
           cp whisper.cpp/main artifacts/whisper
-        elif [ -f "whisper.cpp/build/bin/whisper-cli" ]; then
-          cp whisper.cpp/build/bin/whisper-cli artifacts/whisper
         else
-          echo "Could not find whisper binary!"
+          echo "Could not find main whisper binary!"
+          find whisper.cpp -name "*main*" -type f
+          find whisper.cpp/build -name "*" -type f | head -20
           exit 1
         fi
         chmod +x artifacts/whisper
