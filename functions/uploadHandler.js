@@ -11,14 +11,6 @@ const bucket = admin.storage().bucket();
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 exports.handleUpload = (req, res) => {
-  res.set("Access-Control-Allow-Origin", "*");
-  res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type, Accept");
-
-  if (req.method === "OPTIONS") {
-    res.status(204).send("");
-    return;
-  }
 
 
 

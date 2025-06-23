@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Box, Paper, TextField, IconButton, Typography, CircularProgress, Button } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
+import API_ENDPOINTS from '../../config/api';
 import './ChatInterface.css';
 
 const ChatInterface = () => {
@@ -46,7 +47,7 @@ const ChatInterface = () => {
         if (interviewData.extractedText && !hasLoadedDataRef.current) {
           hasLoadedDataRef.current = true;
           setIsLoading(true);
-          const response = await fetch(`${process.env.REACT_APP_API_URL}/interviewChat`, {
+          const response = await fetch(API_ENDPOINTS.INTERVIEW_CHAT, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -88,7 +89,7 @@ const ChatInterface = () => {
     setIsLoading(true);
     try {
       const interviewData = JSON.parse(localStorage.getItem('interviewData') || '{}');
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/interviewChat`, {
+      const response = await fetch(API_ENDPOINTS.INTERVIEW_CHAT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -255,7 +256,7 @@ const ChatInterface = () => {
     try {
       const base64Audio = btoa(String.fromCharCode.apply(null, new Uint8Array(audioBuffer)));
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/transcribe`, {
+      const response = await fetch(API_ENDPOINTS.TRANSCRIBE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

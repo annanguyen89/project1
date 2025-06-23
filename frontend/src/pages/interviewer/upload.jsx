@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/common/header/header';
 import Footer from '../../components/common/footer/footer';
 import Button from '../../components/common/button/button';
+import API_ENDPOINTS from '../../config/api';
 import './upload.css';
 
 const MAX_FILE_SIZE_MB = 8;
@@ -73,7 +74,7 @@ function UploadPage() {
 
     try {
       const response = await fetch(
-        process.env.REACT_APP_API_URL + '/uploadDocument',
+        API_ENDPOINTS.UPLOAD_DOCUMENT,
         {
           method: 'POST',
           body: formData,

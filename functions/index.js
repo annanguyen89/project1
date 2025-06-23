@@ -6,7 +6,12 @@ const { USE_EMBEDDINGS } = config;
 const embeddingService = require('./services/embedding-service');
 const interviewService = require('./services/interview-service');
 config.logConfig();
-const cors = require('cors')({ origin: true });
+const cors = require('cors')({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Accept', 'Authorization']
+});
 
 exports.health = functions.https.onRequest((req, res) => {
     return cors(req, res, async () => {
@@ -27,7 +32,11 @@ exports.health = functions.https.onRequest((req, res) => {
     });
 });
 
-exports.uploadDocument = functions.https.onRequest(handleUpload);
+exports.uploadDocument = functions.https.onRequest((req, res) => {
+    return cors(req, res, () => {
+        handleUpload(req, res);
+    });
+});
 
 exports.interviewChat = functions.https.onRequest((req, res) => {
   return cors(req, res, async () => {
