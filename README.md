@@ -3,7 +3,7 @@
 A mock interview platform powered by AWS Bedrock Claude 2, AWS Transcribe, and Firebase that provides personalized interview questions and detailed feedback based on your resume and job description.
 
 ## Our website
-** Start practicing:** [https://ai-interview-helper-d2407.web.app](https://ai-interview-helper-d2407.web.app)
+**Start practicing:** [https://ai-interview-helper-d2407.web.app](https://ai-interview-helper-d2407.web.app)
 
 ### **Multi-Modal Interview Experience**
 - **Voice Recording**: Real-time speech-to-text transcription using AWS Transcribe
