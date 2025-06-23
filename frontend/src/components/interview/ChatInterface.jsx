@@ -14,8 +14,8 @@ const ChatInterface = () => {
   const messagesEndRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const hasLoadedDataRef = useRef(false);
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -39,12 +39,12 @@ const ChatInterface = () => {
     return String(messageContent || '').trim() || 'No response received';
   };
 
-  // Load initial interview data
   useEffect(() => {
     const loadInterviewData = async () => {
       try {
         const interviewData = JSON.parse(localStorage.getItem('interviewData') || '{}');
-        if (interviewData.extractedText && messages.length === 0) {
+        if (interviewData.extractedText && !hasLoadedDataRef.current) {
+          hasLoadedDataRef.current = true;
           setIsLoading(true);
           const response = await fetch(`${process.env.REACT_APP_API_URL}/interviewChat`, {
             method: 'POST',
@@ -58,7 +58,8 @@ const ChatInterface = () => {
               chatHistory: [],
               interviewData: {
                 cv: interviewData.extractedText,
-                jobDescription: interviewData.jobDescription
+                jobDescription: interviewData.jobDescription,
+                interviewType: interviewData.interviewType || 'technical'
               }
             })
           });
@@ -94,7 +95,7 @@ const ChatInterface = () => {
           'Accept': 'application/json'
         },
         body: JSON.stringify({
-          currentQuestionIndex: messages.length / 2,
+          currentQuestionIndex: messages.filter(msg => msg.type === 'ai').length,
           userAnswer,
           chatHistory: messages.map(msg => ({
             role: msg.type === 'ai' ? 'assistant' : 'user',
@@ -102,7 +103,8 @@ const ChatInterface = () => {
           })),
           interviewData: {
             cv: interviewData.extractedText,
-            jobDescription: interviewData.jobDescription
+            jobDescription: interviewData.jobDescription,
+            interviewType: interviewData.interviewType || 'technical'
           }
         })
       });
@@ -310,9 +312,26 @@ const ChatInterface = () => {
               fontFamily: 'Saira'
             }}
           >
-            <Typography sx={{ fontFamily: 'Saira' }}>
-              {typeof message.content === 'object' ? JSON.stringify(message.content) : message.content}
-            </Typography>
+            <Box sx={{ fontFamily: 'Saira' }}>
+              {typeof message.content === 'object' ? 
+                JSON.stringify(message.content) : 
+                message.content.split('\n').map((line, lineIndex) => (
+                  <Typography 
+                    key={lineIndex}
+                    sx={{ 
+                      fontFamily: 'Saira',
+                      fontWeight: line.startsWith('**') && line.endsWith('**') ? 'bold' : 'normal',
+                      fontSize: line.startsWith('**Problem:') ? '1.1rem' : '0.9rem',
+                      mb: line.trim() === '' ? 1 : 0.5,
+                      whiteSpace: 'pre-wrap',
+                      color: message.type === 'ai' ? 'text.primary' : '#fff'
+                    }}
+                  >
+                    {line.replace(/\*\*(.*?)\*\*/g, '$1')}
+                  </Typography>
+                ))
+              }
+            </Box>
           </Box>
         ))}
         {isLoading && (

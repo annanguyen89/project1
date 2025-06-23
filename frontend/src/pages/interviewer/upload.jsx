@@ -13,6 +13,7 @@ function UploadPage() {
   const navigate = useNavigate();
   const [resumeFile, setResumeFile] = useState(null);
   const [jobDescription, setJobDescription] = useState('');
+  const [interviewType, setInterviewType] = useState('technical');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -60,17 +61,15 @@ function UploadPage() {
       return;
     }
 
-    console.log('Resume file before submit:', resumeFile);
-    console.log('Job description before submit:', jobDescription);
+
 
     setIsLoading(true);
     const formData = new FormData();
     formData.append('resumeFile', resumeFile);
     formData.append('jobDescription', jobDescription);
 
-    // Timeout logic
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s
+    const timeoutId = setTimeout(() => controller.abort(), 30000); 
 
     try {
       const response = await fetch(
@@ -96,7 +95,8 @@ function UploadPage() {
       setSuccess('Files uploaded successfully! Ready for the interview...');
       localStorage.setItem('interviewData', JSON.stringify({
         extractedText: data.extractedText || '',
-        jobDescription: jobDescription
+        jobDescription: jobDescription,
+        interviewType: interviewType
       }));
 
       setTimeout(() => {
@@ -156,6 +156,59 @@ function UploadPage() {
               />
               <div style={{ fontSize: '12px', color: '#888', textAlign: 'right' }}>
                 {jobDescription.length}/{MAX_JOB_DESC_LENGTH}
+              </div>
+            </div>
+
+            <div className="upload-section">
+              <h2>Interview Type</h2>
+              <p className="interview-type-description">
+                Choose the type of interview you'd like to practice:
+              </p>
+              <div className="interview-type-options">
+                <label className={`interview-type-option ${interviewType === 'technical' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="interviewType"
+                    value="technical"
+                    checked={interviewType === 'technical'}
+                    onChange={(e) => setInterviewType(e.target.value)}
+                    className="interview-type-radio"
+                  />
+                  <div className="interview-type-content">
+                    <h3>🔧 Technical Interview</h3>
+                    <p>Focus on technical skills, coding problems, system design, and domain expertise.</p>
+                  </div>
+                </label>
+
+                <label className={`interview-type-option ${interviewType === 'behavioral' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="interviewType"
+                    value="behavioral"
+                    checked={interviewType === 'behavioral'}
+                    onChange={(e) => setInterviewType(e.target.value)}
+                    className="interview-type-radio"
+                  />
+                  <div className="interview-type-content">
+                    <h3>💭 Behavioral Interview</h3>
+                    <p>Focus on past experiences, problem-solving approach, teamwork, and cultural fit.</p>
+                  </div>
+                </label>
+
+                <label className={`interview-type-option ${interviewType === 'phone-screen' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="interviewType"
+                    value="phone-screen"
+                    checked={interviewType === 'phone-screen'}
+                    onChange={(e) => setInterviewType(e.target.value)}
+                    className="interview-type-radio"
+                  />
+                  <div className="interview-type-content">
+                    <h3>📞 Phone Screen</h3>
+                    <p>Initial screening questions about background, motivation, and basic qualifications.</p>
+                  </div>
+                </label>
               </div>
             </div>
 

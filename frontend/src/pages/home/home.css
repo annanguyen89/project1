@@ -17,7 +17,7 @@
 
 .hero-section {
     text-align: left;
-    padding: 80px 5% 40px;
+    padding: 40px 5% 40px;
     margin: 0;
     max-width: 1400px;
     margin-left: 0;
@@ -89,25 +89,44 @@
     line-height: 1.3;
 }
 
-.ai-interviewer-image-container {
+.ai-interviewer-video-container {
     width: 100%;
     margin-top: 20px;
     text-align: center;
     margin-bottom: 60px;
 }
 
-.ai-interviewer-image-container img {
+.ai-interviewer-video {
     max-width: 100%;
     height: auto;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     display: block;
+    margin: 0 auto;
 }
 
-/* Basic Responsive Adjustments */
+.ai-interviewer-video::-webkit-media-controls {
+    display: none !important;
+}
+
+.ai-interviewer-video::-webkit-media-controls-panel {
+    display: none !important;
+}
+
+.ai-interviewer-video::-webkit-media-controls-play-button {
+    display: none !important;
+}
+
+.ai-interviewer-video::-webkit-media-controls-start-playback-button {
+    display: none !important;
+}
+
 @media (max-width: 768px) {
     .main-content {
         padding: var(--spacing-large) var(--spacing-medium);
+    }
+    .hero-section {
+        padding: 30px 5% 40px;
     }
     .hero-section h1 {
         font-size: 36px;
@@ -192,6 +211,23 @@
     justify-content: center;
     color: #666;
     font-size: 18px;
+}
+
+.feature-image {
+    width: 100%;
+    height: 225px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.feature-image:hover {
+    transform: scale(1.02);
+}
+
+.feature-image[alt="Phone Interview Preview"] {
+    object-position: center bottom;
 }
 
 @media (max-width: 1024px) {

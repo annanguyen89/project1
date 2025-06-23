@@ -5,26 +5,22 @@ const os = require("os");
 const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
 const pdfParse = require("pdf-parse");
-const { makeBedrockRequest } = require("./services/bedrock-client");
-const cors = require("cors")({ origin: true });
 
-// Firebase Storage bucket
+
 const bucket = admin.storage().bucket();
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 exports.handleUpload = (req, res) => {
-  // Set CORS headers
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.set("Access-Control-Allow-Headers", "Content-Type, Accept");
 
-  // Handle preflight requests
   if (req.method === "OPTIONS") {
     res.status(204).send("");
     return;
   }
 
-  console.log('Request method:', req.method, 'Path:', req.path);
+
 
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method Not Allowed" });
@@ -35,22 +31,18 @@ exports.handleUpload = (req, res) => {
 
   let jobDescriptionText = "";
   let fileSizeError = null;
-  const uploadedFilesData = [];
   const fileUploadPromises = [];
   let uploadedFileInfo = null;
   let fileTypeError = null;
-  let jobDescriptionId = uuidv4(); // Generate unique ID for job description
+  let jobDescriptionId = uuidv4(); 
 
   busboy.on("file", (fieldname, file, info) => {
-    const { filename, encoding, mimeType } = info;
-    console.log('File event:', { fieldname, filename, mimetype: mimeType });
+    const { filename, mimeType } = info;
     if (fieldname !== "resumeFile") {
-      console.log('Skipping non-resume file:', fieldname);
       file.resume();
       return;
     }
     if (typeof filename !== "string" || !filename) {
-      console.log('Invalid filename received:', filename);
       file.resume();
       return;
     }
@@ -89,13 +81,8 @@ exports.handleUpload = (req, res) => {
             contentType: mimeType,
             metadata: {},
           });
-          console.log('File uploaded to Firebase Storage:', destination);
-          uploadedFilesData.push({
-            fieldname,
-            storagePath: destination,
-            mimetype: mimeType,
-            uniqueFileName,
-          });
+
+
           uploadedFileInfo = { destination, mimeType };
           resolve();
         } catch (err) {
@@ -114,12 +101,9 @@ exports.handleUpload = (req, res) => {
   });
 
   busboy.on("field", (fieldname, val) => {
-    console.log('Field event:', { fieldname, val });
     if (fieldname === "jobDescription") {
       jobDescriptionText = val;
-      // Create a Buffer from the job description text
       const jobDescriptionBuffer = Buffer.from(val, 'utf-8');
-      // Store job description in Firebase Storage
       const jobDescriptionPath = `job-descriptions/${jobDescriptionId}.txt`;
       const jobDescriptionFile = bucket.file(jobDescriptionPath);
       
@@ -129,13 +113,8 @@ exports.handleUpload = (req, res) => {
           timestamp: new Date().toISOString()
         }
       }).then(() => {
-        console.log('Job description uploaded to Firebase Storage:', jobDescriptionPath);
-        uploadedFilesData.push({
-          fieldname,
-          storagePath: jobDescriptionPath,
-          mimetype: 'text/plain',
-          uniqueFileName: `${jobDescriptionId}.txt`
-        });
+
+
       }).catch(err => {
         console.error('Error uploading job description:', err);
         throw err;
@@ -146,7 +125,6 @@ exports.handleUpload = (req, res) => {
   });
 
   busboy.on("finish", async () => {
-    console.log('Busboy finish event');
     if (fileTypeError) {
       return res.status(400).json({ message: fileTypeError });
     }
@@ -155,12 +133,10 @@ exports.handleUpload = (req, res) => {
     }
     try {
       await Promise.all(fileUploadPromises);
-      console.log('All file uploads complete:', uploadedFilesData);
       let extractedText = "";
 
       if (uploadedFileInfo) {
         const [fileBuffer] = await bucket.file(uploadedFileInfo.destination).download();
-        // Extract text from PDF
         const pdfData = await pdfParse(fileBuffer);
         extractedText = pdfData.text;
       }
@@ -170,23 +146,13 @@ exports.handleUpload = (req, res) => {
           jobDescription: `job-descriptions/${jobDescriptionId}.txt`
         };
 
-      // After successful file upload and processing
-      console.log('Sending success response with:', {
-        extractedText: extractedText ? 'present' : 'missing',
-        bedrockResult: bedrockResult ? 'present' : 'missing',
-        fileReferences
-      });
+
 
       res.status(200).json({
         success: true,
         message: "Files uploaded successfully",
         extractedText: extractedText || '',
         jobDescription: jobDescriptionText,
-        bedrockResult: {
-          content: bedrockResult,
-          isComplete: false,
-          questionCount: 1
-        },
         fileReferences
       });
     } catch (error) {

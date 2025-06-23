@@ -125,3 +125,59 @@
 .sign-up-link a:hover {
     text-decoration: underline;
 }
+
+.error-message {
+    background-color: #fee;
+    color: #c33;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    border: 1px solid #fcc;
+    text-align: center;
+}
+
+.success-message {
+    background-color: #efe;
+    color: #363;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    border: 1px solid #cfc;
+    text-align: center;
+}
+
+.forgot-password-link {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: var(--medium-gray);
+    text-decoration: none;
+    text-align: right;
+    display: block;
+    margin-bottom: 10px;
+    font-family: var(--font-family-saira);
+    cursor: pointer;
+    padding: 0;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+}
+
+.forgot-password-link:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.form-group input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.form-submit-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #666;
+}

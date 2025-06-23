@@ -1,13 +1,14 @@
 import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Header from '../../components/common/header/header';
 import Footer from '../../components/common/footer/footer';
-import Button from '../../components/common/button/button';
-import aiInterviewerCristine from '../../assets/images/ai_interviewer_cristine.jpg';
+import homepageVideo from '../../assets/images/homepage.mp4';
+import phoneScreenImage from '../../assets/images/phone-screen.png';
+import technicalImage from '../../assets/images/technical.png';
+import behavioralImage from '../../assets/images/behavioral.png';
 import './home.css';
 
 function HomePage() {
-  const navigate = useNavigate();
 
   return (
     <div className="home-page-container">
@@ -21,8 +22,17 @@ function HomePage() {
           <Link to="/interviewer/upload" className="start-interview-button">
             Start Your Interview
           </Link>
-          <div className="ai-interviewer-image-container">
-            <img src={aiInterviewerCristine} alt="AI Interviewer Cristine" />
+          <div className="ai-interviewer-video-container">
+            <video 
+              src={homepageVideo} 
+              autoPlay 
+              loop 
+              muted 
+              playsInline
+              className="ai-interviewer-video"
+            >
+              Your browser does not support the video tag.
+            </video>
           </div>
           
           <div className="key-features-section">
@@ -35,13 +45,13 @@ function HomePage() {
                   <p>Practice phone screens with personalized questions. Boost your confidence by getting real-time feedback.</p>
                 </div>
                 <div className="feature-preview">
-                  <div className="video-placeholder">Video Preview</div>
+                  <img src={phoneScreenImage} alt="Phone Interview Preview" className="feature-image" />
                 </div>
               </div>
 
               <div className="feature-item">
                 <div className="feature-preview">
-                  <div className="video-placeholder">Video Preview</div>
+                  <img src={technicalImage} alt="Technical Interview Preview" className="feature-image" />
                 </div>
                 <div className="feature-content">
                   <h3>Technical Interview</h3>
@@ -55,7 +65,7 @@ function HomePage() {
                   <p>Practice STAR method for behavioral questions tailored to your resume. Get sample answers with your own story.</p>
                 </div>
                 <div className="feature-preview">
-                  <div className="video-placeholder">Video Preview</div>
+                  <img src={behavioralImage} alt="Behavioral Interview Preview" className="feature-image" />
                 </div>
               </div>
             </div>

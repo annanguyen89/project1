@@ -21,7 +21,6 @@ Format the response as a JSON array of questions.`;
 
         return await makeBedrockRequest(prompt, 2048, 0.7);
     } catch (error) {
-        console.error('Error generating interview questions:', error);
         throw new Error(`Failed to generate questions: ${error.message}`);
     }
 }

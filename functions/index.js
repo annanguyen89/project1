@@ -1,41 +1,37 @@
 const functions = require("firebase-functions");
-const admin = require("./firebase");  
 const { handleUpload } = require("./uploadHandler");
 const SpeechToText = require("./speechToText");
-const multer = require('multer');
-const path = require('path');
-const { generateInterviewQuestions } = require('./bedrock-service');
-const interviewChatService = require('./services/interview-chat-service');
-const { onRequest } = require("firebase-functions/v2/https");
+const config = require('./config');
+const { USE_EMBEDDINGS } = config;
+const embeddingService = require('./services/embedding-service');
+const interviewService = require('./services/interview-service');
+config.logConfig();
 const cors = require('cors')({ origin: true });
 
-// Configure multer for file upload
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 8 * 1024 * 1024, // 8MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only PDF and Word documents are allowed.'));
-    }
-  }
-}).single('resumeFile');
+exports.health = functions.https.onRequest((req, res) => {
+    return cors(req, res, async () => {
+        const configStatus = config.getConfigStatus();
+        const interviewServiceStatus = interviewService.getServiceStatus();
+        
+        res.json({
+            status: 'healthy',
+            timestamp: new Date().toISOString(),
+            configuration: configStatus,
+            services: {
+                interview: interviewServiceStatus,
+                embedding: {
+                    enabled: USE_EMBEDDINGS
+                }
+            }
+        });
+    });
+});
 
-// Define the functions
 exports.uploadDocument = functions.https.onRequest(handleUpload);
 
 exports.interviewChat = functions.https.onRequest((req, res) => {
   return cors(req, res, async () => {
     try {
-      // Check if the request is JSON
       if (!req.is('application/json')) {
         return res.status(400).json({ 
           message: "Content-Type must be application/json",
@@ -45,28 +41,82 @@ exports.interviewChat = functions.https.onRequest((req, res) => {
 
       const { currentQuestionIndex, userAnswer, chatHistory } = req.body;
       const interviewData = req.body.interviewData || {};
-      const { cv, jobDescription } = interviewData;
+      const { cv, jobDescription, interviewType = 'technical' } = interviewData;
 
       let response;
       if (currentQuestionIndex === 0) {
-        // Start new interview
-        response = await interviewChatService.startInterview(cv, jobDescription);
-      } else {
-        // Continue interview with user's answer
-        response = await interviewChatService.handleUserResponse(
-          cv,
-          jobDescription,
-          userAnswer,
-          currentQuestionIndex,
-          chatHistory
+        const questionResult = await interviewService.generateQuestionWithEmbeddings(
+          cv, 
+          jobDescription, 
+          [], 
+          interviewType
         );
+        response = {
+          message: questionResult.question,
+          isComplete: false,
+          questionCount: 1,
+          metadata: questionResult.metadata
+        };
+      } else {
+        const conversationHistory = [];
+        
+        for (let i = 0; i < chatHistory.length; i += 2) {
+          const questionItem = chatHistory[i];
+          const answerItem = chatHistory[i + 1];
+          
+          if (questionItem && questionItem.role === 'assistant') {
+            conversationHistory.push({
+              question: questionItem.content || '',
+              answer: answerItem ? answerItem.content || '' : ''
+            });
+          }
+        }
+        
+        if (conversationHistory.length > 0 && userAnswer) {
+          conversationHistory[conversationHistory.length - 1].answer = userAnswer;
+        } else if (chatHistory.length > 0 && userAnswer) {
+          const lastAiMessage = chatHistory.slice().reverse().find(msg => msg.role === 'assistant');
+          conversationHistory.push({
+            question: lastAiMessage ? lastAiMessage.content : '',
+            answer: userAnswer
+          });
+        }
+        
+        const questionsAnswered = Math.floor((chatHistory.length + (userAnswer ? 1 : 0)) / 2);
+
+        
+        if (questionsAnswered >= config.MAX_QUESTIONS) {
+          const feedbackResult = await interviewService.generateFeedbackWithEmbeddings(
+            cv,
+            jobDescription,
+            conversationHistory,
+            interviewType
+          );
+          response = {
+            message: feedbackResult.feedback,
+            isComplete: true,
+            questionCount: questionsAnswered,
+            metadata: feedbackResult.metadata
+          };
+        } else {
+          const questionResult = await interviewService.generateQuestionWithEmbeddings(
+            cv,
+            jobDescription,
+            conversationHistory,
+            interviewType
+          );
+          response = {
+            message: questionResult.question,
+            isComplete: false,
+            questionCount: questionsAnswered + 1,
+            metadata: questionResult.metadata
+          };
+        }
       }
 
-      // If response already has bedrockResult format, use it directly
       if (response.bedrockResult) {
         res.status(200).json(response);
       } else {
-        // Otherwise, format it to match bedrockResult structure
         res.status(200).json({
           bedrockResult: {
             content: [{ text: response.message }],
@@ -88,7 +138,6 @@ exports.interviewChat = functions.https.onRequest((req, res) => {
 
 const speechToText = new SpeechToText();
 
-// Transcribe endpoint
 exports.transcribe = functions.https.onRequest((req, res) => {
     return cors(req, res, async () => {
         try {
@@ -99,9 +148,7 @@ exports.transcribe = functions.https.onRequest((req, res) => {
                 });
             }
 
-            // Remove data URL prefix if present
             const base64Data = audio.replace(/^data:audio\/\w+;base64,/, '');
-            
             const result = await speechToText.startTranscription(base64Data);
             res.json(result);
         } catch (error) {
@@ -114,33 +161,10 @@ exports.transcribe = functions.https.onRequest((req, res) => {
     });
 });
 
-// Generate interview questions endpoint
-exports.generateQuestions = functions.https.onRequest(async (req, res) => {
-    try {
-        const { cv, jobDescription } = req.body;
-        
-        if (!cv || !jobDescription) {
-            return res.status(400).json({ 
-                error: 'Both CV and job description are required' 
-            });
-        }
-
-        const questions = await generateInterviewQuestions(cv, jobDescription);
-        res.json({ questions });
-    } catch (error) {
-        console.error('Error in generate-questions endpoint:', error);
-        res.status(500).json({ 
-            error: 'Failed to generate interview questions',
-            details: error.message 
-        });
-    }
-});
-
-// Start interview endpoint
-exports.startInterview = functions.https.onRequest((req, res) => {
+exports.generateQuestions = functions.https.onRequest((req, res) => {
     return cors(req, res, async () => {
         try {
-            const { cv, jobDescription } = req.body;
+            const { cv, jobDescription, interviewType = 'technical' } = req.body;
             
             if (!cv || !jobDescription) {
                 return res.status(400).json({ 
@@ -148,7 +172,48 @@ exports.startInterview = functions.https.onRequest((req, res) => {
                 });
             }
 
-            const response = await interviewChatService.startInterview(cv, jobDescription);
+            const questionResult = await interviewService.generateQuestionWithEmbeddings(
+                cv, 
+                jobDescription, 
+                [], 
+                interviewType
+            );
+            const questions = [questionResult.question];
+            
+            res.json({ questions });
+        } catch (error) {
+            console.error('Error in generate-questions endpoint:', error);
+            res.status(500).json({ 
+                error: 'Failed to generate interview questions',
+                details: error.message 
+            });
+        }
+    });
+});
+
+exports.startInterview = functions.https.onRequest((req, res) => {
+    return cors(req, res, async () => {
+        try {
+            const { cv, jobDescription, interviewType = 'technical' } = req.body;
+            
+            if (!cv || !jobDescription) {
+                return res.status(400).json({ 
+                    error: 'Both CV and job description are required' 
+                });
+            }
+
+            const questionResult = await interviewService.generateQuestionWithEmbeddings(
+                cv, 
+                jobDescription, 
+                [], 
+                interviewType
+            );
+            const response = {
+                message: questionResult.question,
+                isComplete: false,
+                questionCount: 1,
+                metadata: questionResult.metadata
+            };
             res.json(response);
         } catch (error) {
             console.error('Error starting interview:', error);
@@ -160,7 +225,6 @@ exports.startInterview = functions.https.onRequest((req, res) => {
     });
 });
 
-// Handle user response and get next question
 exports.continueInterview = functions.https.onRequest((req, res) => {
     return cors(req, res, async () => {
         try {
@@ -178,13 +242,44 @@ exports.continueInterview = functions.https.onRequest((req, res) => {
                 });
             }
 
-            const response = await interviewChatService.handleUserResponse(
-                cv,
-                jobDescription,
-                userAnswer,
-                questionCount,
-                previousMessages
-            );
+            const conversationHistory = previousMessages.map(msg => ({
+                question: msg.question,
+                answer: msg.answer
+            }));
+            
+            conversationHistory.push({
+                question: previousMessages[previousMessages.length - 1]?.question || '',
+                answer: userAnswer
+            });
+            
+            let response;
+            if (questionCount >= config.MAX_QUESTIONS) {
+                const feedbackResult = await interviewService.generateFeedbackWithEmbeddings(
+                    cv,
+                    jobDescription,
+                    conversationHistory,
+                    'technical' 
+                );
+                response = {
+                    message: feedbackResult.feedback,
+                    isComplete: true,
+                    questionCount: questionCount,
+                    metadata: feedbackResult.metadata
+                };
+            } else {
+                const questionResult = await interviewService.generateQuestionWithEmbeddings(
+                    cv,
+                    jobDescription,
+                    conversationHistory,
+                    'technical' 
+                );
+                response = {
+                    message: questionResult.question,
+                    isComplete: false,
+                    questionCount: questionCount + 1,
+                    metadata: questionResult.metadata
+                };
+            }
             
             res.json(response);
         } catch (error) {
@@ -196,3 +291,65 @@ exports.continueInterview = functions.https.onRequest((req, res) => {
         }
     });
 });
+
+exports.diagnosticBedrock = functions.https.onRequest((req, res) => {
+    return cors(req, res, async () => {
+        try {
+            const { cv, jobDescription } = req.body;
+            
+            if (!cv || !jobDescription) {
+                return res.status(400).json({ 
+                    error: 'Both CV and job description are required' 
+                });
+            }
+
+            const diagnostic = embeddingService.diagnosticDataFlow(cv, jobDescription);
+            
+            const sampleEmbeddingRequest = {
+                modelId: "amazon.titan-embed-text-v1",
+                contentType: "application/json",
+                accept: "application/json",
+                body: {
+                    inputText: cv.substring(0, 200) + "..." 
+                }
+            };
+            
+            const sampleClaudeRequest = {
+                modelId: "anthropic.claude-v2",
+                contentType: "application/json", 
+                accept: "application/json",
+                body: {
+                    prompt: "\\n\\nHuman: [Enhanced prompt with CV text, JD text, and similarity scores]\\n\\nAssistant:",
+                    max_tokens_to_sample: 300,
+                    temperature: 0.7,
+                    stop_sequences: ["\\n\\nHuman:"]
+                }
+            };
+            
+            res.json({
+                message: "Bedrock Data Flow Diagnostic",
+                dataFlow: diagnostic,
+                sampleRequests: {
+                    embedding: sampleEmbeddingRequest,
+                    claude: sampleClaudeRequest
+                },
+                explanation: {
+                    step1: "CV and JD text sent as PLAIN TEXT to Titan Embedding model",
+                    step2: "Titan returns 1536-dimensional vectors (not sent to Claude)",
+                    step3: "Vectors processed locally to calculate similarity score",
+                    step4: "Enhanced PLAIN TEXT prompt (with similarity data) sent to Claude v2",
+                    step5: "Claude generates interview questions/feedback based on enhanced prompt"
+                }
+            });
+            
+        } catch (error) {
+            console.error('Diagnostic error:', error);
+            res.status(500).json({ 
+                error: 'Failed to run diagnostic',
+                details: error.message 
+            });
+        }
+    });
+});
+
+

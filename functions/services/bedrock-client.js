@@ -1,25 +1,33 @@
 const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-bedrock-runtime");
-require('dotenv').config();
 
-// Initialize Bedrock client with credentials from environment variables
-const bedrockClient = new BedrockRuntimeClient({
-    region: process.env.AWS_REGION || 'us-east-1',
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+try {
+    require('dotenv').config();
+} catch (error) {
+}
+
+let bedrockClient = null;
+try {
+    if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+        bedrockClient = new BedrockRuntimeClient({
+            region: process.env.AWS_REGION || 'us-east-1',
+            credentials: {
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+            }
+        });
+    } else {
     }
-});
+} catch (error) {
+}
 
-// Helper function to clean and format text
 const cleanText = (text) => {
     return text.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
 };
 
-// Generic function to make Bedrock requests
 async function makeBedrockRequest(prompt, maxTokens = 2048, temperature = 0.7) {
     try {
-        if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-            throw new Error('AWS credentials not configured');
+        if (!bedrockClient) {
+            throw new Error('Bedrock client not initialized - AWS credentials not configured');
         }
 
         const input = {
@@ -27,30 +35,23 @@ async function makeBedrockRequest(prompt, maxTokens = 2048, temperature = 0.7) {
             contentType: "application/json",
             accept: "application/json",
             body: JSON.stringify({
-                anthropic_version: "bedrock-2023-05-31",
-                max_tokens: maxTokens,
+                prompt: `\n\nHuman: ${prompt}\n\nAssistant:`,
+                max_tokens_to_sample: maxTokens,
                 temperature: temperature,
-                messages: [
-                    {
-                        role: "user",
-                        content: prompt
-                    }
-                ]
+                stop_sequences: ["\n\nHuman:"]
             })
         };
 
         const command = new InvokeModelCommand(input);
         const response = await bedrockClient.send(command);
         
-        // Parse the response
         const responseBody = JSON.parse(new TextDecoder().decode(response.body));
-        console.log('Raw Bedrock response:', responseBody);
+
         
         if (responseBody.error) {
             throw new Error(`Bedrock API error: ${responseBody.error.message}`);
         }
         
-        // Extract the actual message text
         let messageText = '';
         if (responseBody.completion) {
             messageText = responseBody.completion;

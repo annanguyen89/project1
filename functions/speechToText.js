@@ -32,7 +32,6 @@ class SpeechToText {
 
       return { transcription: transcription.trim() };
     } catch (error) {
-      console.error("Transcription error:", error);
       throw error;
     }
   }
@@ -45,7 +44,6 @@ class SpeechToText {
       [Symbol.asyncIterator]: async function* () {
         for (const chunk of chunks) {
           yield { AudioEvent: { AudioChunk: chunk } };
-          // Add a small delay between chunks to prevent overwhelming the service
           await new Promise(resolve => setTimeout(resolve, 10));
         }
       },
